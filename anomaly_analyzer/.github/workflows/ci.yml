@@ -19,12 +19,13 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-asyncio pytest-playwright ruff mypy polars duckdb vectorbt statsmodels scipy httpx pydantic python-dotenv pyarrow
-        playwright install --with-deps chromium
+        curl -LsSf https://astral.sh/uv/install.sh | sh
+        uv sync
+        uv sync --all-extras --dev
+        uv run playwright install --with-deps chromium
     - name: Run Ruff
-      run: ruff check .
+      run: uv run ruff check .
     - name: Run MyPy
-      run: mypy .
+      run: uv run mypy .
     - name: Run Pytest
-      run: PYTHONPATH=. pytest tests/
+      run: uv run pytest tests/

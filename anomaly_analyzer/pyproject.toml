@@ -1,3 +1,23 @@
+[project]
+name = "anomaly-analyzer"
+version = "0.1.0"
+description = "Japan Stock Anomaly Analyzer"
+readme = "../README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "reflex==0.8.28.post1",
+    "polars",
+    "duckdb",
+    "vectorbt",
+    "statsmodels",
+    "python-dotenv",
+    "httpx",
+    "pandas",
+    "scipy",
+    "pyarrow",
+    "numpy<2.0.0"
+]
+
 [tool.ruff]
 line-length = 88
 
@@ -12,3 +32,14 @@ ignore = ["ANN101", "ANN102", "S101", "DTZ001", "PLR2004", "E501", "BLE001", "EM
 [tool.mypy]
 strict = true
 ignore_missing_imports = true
+
+[dependency-groups]
+dev = [
+    "playwright>=1.58.0",
+    "pytest>=9.0.3",
+]
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]

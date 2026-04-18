@@ -2,7 +2,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 
-@pytest.mark.skip(reason="Needs local reflex server running to test UI")
+@pytest.mark.skip(reason="Needs local reflex server running to test UI") # type: ignore[untyped-decorator]
 def test_app_loads(page: Page) -> None:
     page.goto("http://localhost:3000")
 
