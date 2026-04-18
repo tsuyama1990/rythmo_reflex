@@ -29,6 +29,8 @@ The Japan Stock Anomaly Analyzer is a web application built with [Reflex](https:
    ```env
    MAIL_ADDRESS=your_jquants_email@example.com
    PASSWORD=your_jquants_password
+   # OR use a refresh token directly
+   JQUANTS_REFRESH_TOKEN=your_refresh_token
    ```
 
 5. **Run the App:**
