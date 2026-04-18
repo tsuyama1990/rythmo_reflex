@@ -12,7 +12,7 @@ from .core.stats import run_stats_test
 
 logger = logging.getLogger(__name__)
 
-class AppState(rx.State):
+class AppState(rx.State):  # type: ignore
     """Global state for the Anomaly Analyzer application."""
 
     is_loading: bool = False

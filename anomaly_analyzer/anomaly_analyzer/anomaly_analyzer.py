@@ -6,7 +6,7 @@ from .style import STYLESHEETS, base_style
 # Initialize the app with the custom stylesheets and base theme
 app = rx.App(
     stylesheets=STYLESHEETS,
-    style=base_style, # type: ignore
+    style=base_style,
     theme=rx.theme(
         has_background=True,
         radius="none",

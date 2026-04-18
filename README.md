@@ -20,7 +20,7 @@ The Japan Stock Anomaly Analyzer is a web application built with [Reflex](https:
 
 3. **Install dependencies:**
    ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
    *(Note: It is recommended to use a virtual environment)*
 
@@ -34,7 +34,7 @@ The Japan Stock Anomaly Analyzer is a web application built with [Reflex](https:
 5. **Run the App:**
    Start the Reflex application:
    ```bash
-   reflex run
+   uv run reflex run
    ```
    The app will typically start on `http://localhost:3000`.
 
