@@ -1,7 +1,9 @@
+
 import reflex as rx
-from ..state import AppState
-from ..style import pixel_box
-from typing import List, Dict, Any
+
+from anomaly_analyzer.state import AppState
+from anomaly_analyzer.style import pixel_box
+
 
 def render_equity_chart() -> rx.Component:
     """Renders the equity curve chart."""

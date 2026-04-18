@@ -45,7 +45,6 @@ def run_backtest(df: pl.DataFrame, anomaly_type: str, slippage_pct: float) -> tu
 
         # Since it's intraday, entry price is Open, exit price is Close
         price_in = open_prices
-        price_out = close_prices
 
     elif anomaly_type == "month_end":
         # Example: Buy at Month End Close, Sell next day Close
@@ -59,7 +58,6 @@ def run_backtest(df: pl.DataFrame, anomaly_type: str, slippage_pct: float) -> tu
 
         # Daily holding, use Close prices
         price_in = close_prices
-        price_out = close_prices
     else:
         msg = f"Unknown anomaly type: {anomaly_type}"
         raise ValueError(msg)

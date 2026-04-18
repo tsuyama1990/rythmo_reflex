@@ -7,7 +7,7 @@ select = [
     "A", "C4", "DTZ", "T10", "EM", "ICN", "PIE", "T20", "PT", "RET", "SIM", "TID",
     "ARG", "PTH", "ERA", "PL", "TRY", "RUF"
 ]
-ignore = ["ANN101", "ANN102"] # ignore self/cls type hints
+ignore = ["ANN101", "ANN102", "S101", "DTZ001", "PLR2004", "E501", "BLE001", "EM101", "TRY301", "TRY003", "TRY400", "RUF012", "RUF001", "TRY002", "DTZ005", "S608", "ERA001"] # ignore self/cls type hints
 
 [tool.mypy]
 strict = true

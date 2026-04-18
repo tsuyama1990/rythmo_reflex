@@ -1,13 +1,13 @@
-import reflex as rx
-from typing import List, Dict, Any, Tuple
 import logging
-from datetime import datetime
+from typing import Any
+
+import reflex as rx
 
 # Import core modules
 from .core.api_client import JQuantsAPIClient
-from .core.etl import process_quotes
-from .core.db import save_quotes, load_quotes
 from .core.backtest import run_backtest
+from .core.db import load_quotes, save_quotes
+from .core.etl import process_quotes
 from .core.stats import run_stats_test
 
 logger = logging.getLogger(__name__)
@@ -19,16 +19,16 @@ class AppState(rx.State):
     error_message: str = ""
 
     target_tickers_input: str = "6599, 7713"
-    target_tickers: List[str] = ["6599", "7713"]
+    target_tickers: list[str] = ["6599", "7713"]
 
     slippage_pct: float = 0.1
     target_anomaly: str = "day_of_week"  # "day_of_week" or "month_end"
 
-    available_dates: Tuple[str, str] = ("", "")
+    available_dates: tuple[str, str] = ("", "")
 
-    backtest_results: Dict[str, Any] = {}
-    chart_data: List[Dict[str, Any]] = []
-    stats_results: Dict[str, Any] = {}
+    backtest_results: dict[str, Any] = {}
+    chart_data: list[dict[str, Any]] = []
+    stats_results: dict[str, Any] = {}
 
     def update_tickers(self, value: str) -> None:
         self.target_tickers_input = value
@@ -79,7 +79,7 @@ class AppState(rx.State):
         except Exception as e:
             logger.error(f"Error fetching data: {e}")
             async with self:
-                self.error_message = f"Failed to fetch data: {str(e)}"
+                self.error_message = f"Failed to fetch data: {e!s}"
         finally:
             await client.close()
             async with self:
@@ -121,7 +121,7 @@ class AppState(rx.State):
         except Exception as e:
             logger.error(f"Error running analysis: {e}")
             async with self:
-                self.error_message = f"Analysis failed: {str(e)}"
+                self.error_message = f"Analysis failed: {e!s}"
         finally:
             async with self:
                 self.is_loading = False
