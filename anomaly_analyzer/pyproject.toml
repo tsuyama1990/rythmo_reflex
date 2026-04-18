@@ -1,0 +1,14 @@
+[tool.ruff]
+line-length = 88
+
+[tool.ruff.lint]
+select = [
+    "F", "E", "W", "C90", "I", "N", "UP", "YTT", "ANN", "ASYNC", "S", "BLE", "B",
+    "A", "C4", "DTZ", "T10", "EM", "ICN", "PIE", "T20", "PT", "RET", "SIM", "TID",
+    "ARG", "PTH", "ERA", "PL", "TRY", "RUF"
+]
+ignore = ["ANN101", "ANN102"] # ignore self/cls type hints
+
+[tool.mypy]
+strict = true
+ignore_missing_imports = true
