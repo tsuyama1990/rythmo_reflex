@@ -36,6 +36,7 @@ ignore_missing_imports = true
 [dependency-groups]
 dev = [
     "playwright>=1.58.0",
+    "pytest-playwright>=0.7.2",
     "pytest>=9.0.3",
 ]
 

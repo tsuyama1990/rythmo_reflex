@@ -43,7 +43,7 @@ class AppState(rx.State):  # type: ignore
     def clear_error(self) -> None:
         self.error_message = ""
 
-    @rx.background  # type: ignore
+    @rx.event(background=True)  # type: ignore
     async def fetch_data(self) -> None:
         """Fetch data from J-Quants API and save to local parquet."""
         async with self:
@@ -85,7 +85,7 @@ class AppState(rx.State):  # type: ignore
             async with self:
                 self.is_loading = False
 
-    @rx.background  # type: ignore
+    @rx.event(background=True)  # type: ignore
     async def run_analysis(self) -> None:
         """Run backtest and stats tests on local data."""
         async with self:

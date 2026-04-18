@@ -10,7 +10,7 @@ def render_equity_chart() -> rx.Component:
 
     return rx.box(
          rx.cond(
-             len(AppState.chart_data) > 0,
+             AppState.chart_data.length() > 0,  # type: ignore
              rx.recharts.line_chart(
                 rx.recharts.line(
                     data_key="Equity",

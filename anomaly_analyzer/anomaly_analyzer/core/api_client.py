@@ -14,12 +14,11 @@ class JQuantsAPIClient:
     BASE_URL = "https://api.jquants.com/v1"
 
     def __init__(self) -> None:
+        self.refresh_token = os.environ.get("JQUANTS_REFRESH_TOKEN")
         self.mail_address = os.environ.get("MAIL_ADDRESS")
         self.password = os.environ.get("PASSWORD")
-        if not self.mail_address or not self.password:
-            logger.warning("MAIL_ADDRESS or PASSWORD environment variables are missing.")
-
-        self.refresh_token: str | None = None
+        if not self.refresh_token and (not self.mail_address or not self.password):
+            logger.warning("JQUANTS_REFRESH_TOKEN or MAIL_ADDRESS/PASSWORD environment variables are missing.")
         self.id_token: str | None = None
         self.id_token_expiry: datetime | None = None
         self.client = httpx.AsyncClient(timeout=30.0)

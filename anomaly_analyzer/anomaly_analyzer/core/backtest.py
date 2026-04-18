@@ -1,3 +1,4 @@
+import warnings
 from typing import Any
 
 import pandas as pd
@@ -78,7 +79,9 @@ def run_backtest(df: pl.DataFrame, anomaly_type: str, slippage_pct: float) -> tu
 
     # Calculate metrics
     # If multiple columns (Codes), we get a DataFrame of metrics. Let's aggregate or take mean.
-    stats = pf.stats()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        stats = pf.stats()
 
     # Handle single vs multiple assets in stats
     if isinstance(stats, pd.DataFrame):
