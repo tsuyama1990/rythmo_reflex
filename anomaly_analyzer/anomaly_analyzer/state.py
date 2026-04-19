@@ -32,7 +32,15 @@ class AppState(rx.State):  # type: ignore
 
     def update_tickers(self, value: str) -> None:
         self.target_tickers_input = value
-        self.target_tickers = [t.strip() for t in value.split(",") if t.strip()]
+        raw_tickers = [t.strip() for t in value.split(",") if t.strip()]
+        
+        normalized = []
+        for t in raw_tickers:
+            if len(t) == 4 and t.isdigit():
+                normalized.append(t + "0")
+            else:
+                normalized.append(t)
+        self.target_tickers = normalized
 
     def update_slippage(self, value: float) -> None:
         self.slippage_pct = float(value)
@@ -54,6 +62,9 @@ class AppState(rx.State):  # type: ignore
         client = JQuantsAPIClient()
 
         try:
+            success_tickers = []
+            failed_tickers = []
+            
             for ticker in tickers:
                 logger.info(f"Fetching data for {ticker}...")
                 quotes = await client.fetch_daily_quotes(ticker)
@@ -62,11 +73,18 @@ class AppState(rx.State):  # type: ignore
                     # Process and save
                     df = process_quotes(quotes)
                     save_quotes(df)
+                    success_tickers.append(ticker)
                     logger.info(f"Saved {len(quotes)} records for {ticker}.")
                 else:
+                    failed_tickers.append(ticker)
                     logger.warning(f"No data returned for {ticker}.")
 
             async with self:
+                if failed_tickers:
+                    msg = f"No data found for: {', '.join(failed_tickers)}. "
+                    msg += "Note: J-Quants V2 Free Plan only covers certain major stocks (e.g., try Toyota '7203')."
+                    self.error_message = msg
+                
                 # Update available dates
                 df_all = load_quotes(tickers)
                 if not df_all.is_empty():
@@ -75,6 +93,10 @@ class AppState(rx.State):  # type: ignore
 
                     if min_date and max_date:
                         self.available_dates = (min_date.strftime("%Y-%m-%d"), max_date.strftime("%Y-%m-%d"))
+                else:
+                    self.available_dates = ("", "")
+                    if not self.error_message:
+                        self.error_message = "Selected tickers returned no data. Check your subscription or try a major ticker like 7203."
 
         except Exception as e:
             logger.error(f"Error fetching data: {e}")

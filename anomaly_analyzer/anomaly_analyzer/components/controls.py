@@ -44,7 +44,7 @@ def sidebar_controls() -> rx.Component:
                     width="100%"
                 ),
 
-                rx.hstack(
+                rx.vstack(
                     rx.button(
                         "Fetch Data",
                         on_click=AppState.fetch_data,
@@ -58,7 +58,8 @@ def sidebar_controls() -> rx.Component:
                         width="100%"
                     ),
                     width="100%",
-                    margin_top="1.5rem"
+                    margin_top="1.5rem",
+                    spacing="2",
                 )
             ),
             style=pixel_box,

@@ -62,7 +62,11 @@ pixel_input = {
     "font_family": "'DotGothic16', sans-serif",
     "border_radius": "0px",
     "background_color": "white",
+    "color": "black",
     "outline": "none",
+    "_placeholder": {
+        "color": "#444444",
+    },
     "_focus": {
         "border_color": COLORS["accent1"]
     }

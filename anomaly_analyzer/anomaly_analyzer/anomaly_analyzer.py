@@ -8,6 +8,7 @@ app = rx.App(
     stylesheets=STYLESHEETS,
     style=base_style,
     theme=rx.theme(
+        appearance="light",
         has_background=True,
         radius="none",
         accent_color="blue",

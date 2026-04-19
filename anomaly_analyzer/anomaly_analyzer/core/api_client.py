@@ -1,6 +1,5 @@
 import logging
 import os
-from datetime import datetime, timedelta
 from typing import Any
 
 import httpx
@@ -10,95 +9,105 @@ load_dotenv()
 logger = logging.getLogger(__name__)
 
 class JQuantsAPIClient:
-    """Client for J-Quants API."""
-    BASE_URL = "https://api.jquants.com/v1"
+    """Client for J-Quants V2 API."""
+    BASE_URL = "https://api.jquants.com/v2"
 
     def __init__(self) -> None:
-        self.refresh_token = os.environ.get("JQUANTS_REFRESH_TOKEN")
-        self.mail_address = os.environ.get("MAIL_ADDRESS")
-        self.password = os.environ.get("PASSWORD")
-        if not self.refresh_token and (not self.mail_address or not self.password):
-            logger.warning("JQUANTS_REFRESH_TOKEN or MAIL_ADDRESS/PASSWORD environment variables are missing.")
-        self.id_token: str | None = None
-        self.id_token_expiry: datetime | None = None
+        # Support both names for the API key in .env
+        self.api_key = os.environ.get("JQUANTS_API_KEY") or os.environ.get("JQUANTS_REFRESH_TOKEN")
+        if not self.api_key:
+            logger.warning("JQUANTS_API_KEY environment variable is missing.")
+        
         self.client = httpx.AsyncClient(timeout=30.0)
 
-    async def _get_refresh_token(self) -> str:
-        """Get refresh token using credentials."""
-        url = f"{self.BASE_URL}/token/auth_user"
-        data = {
-            "mailaddress": self.mail_address,
-            "password": self.password
-        }
-        response = await self.client.post(url, json=data)
-
-        if response.status_code == 401:
-            msg = "Authentication failed: Invalid credentials."
+    async def fetch_daily_quotes(self, code: str, from_date: str = "", to_date: str = "") -> list[dict[str, Any]]:
+        """Fetch daily quotes, normalizing code to 5 digits and applying Free Plan date defaults."""
+        if not self.api_key:
+            msg = "Missing J-Quants API Key. Please update your .env file."
             raise Exception(msg)
-        response.raise_for_status()
 
-        token_data = response.json()
-        return str(token_data["refreshToken"])
+        # Normalize ticker code: append '0' if it's a 4-digit code
+        if len(code) == 4 and code.isdigit():
+            normalized_code = code + "0"
+            logger.info(f"Normalizing ticker {code} to {normalized_code} for V2 API")
+        else:
+            normalized_code = code
 
-    async def _get_id_token(self) -> str:
-        """Get ID token using refresh token."""
-        if not self.refresh_token:
-            self.refresh_token = await self._get_refresh_token()
+        # Set default dates for Free Plan (12-week delay window)
+        from datetime import datetime, timedelta
+        now = datetime.now()
+        
+        # Default 'to' is 14 weeks ago to be very safe (Free plan is 12 weeks delayed)
+        if not to_date:
+            to_date = (now - timedelta(weeks=14)).strftime("%Y-%m-%d")
+        
+        # Default 'from' is 700 days before 'to' (Free plan is about 2 years)
+        if not from_date:
+            target_to = datetime.strptime(to_date, "%Y-%m-%d")
+            from_date = (target_to - timedelta(days=700)).strftime("%Y-%m-%d")
 
-        url = f"{self.BASE_URL}/token/auth_refresh"
-        # Free plan parameter
-        params = {"refresh_token": self.refresh_token}
-        response = await self.client.post(url, params=params)
-
-        if response.status_code == 401:
-             # Refresh token might be expired, try getting a new one
-             self.refresh_token = await self._get_refresh_token()
-             params = {"refresh_token": self.refresh_token}
-             response = await self.client.post(url, params=params)
-
-        response.raise_for_status()
-        token_data = response.json()
-
-        self.id_token_expiry = datetime.now() + timedelta(hours=23) # Refresh slightly before 24h
-        return str(token_data["idToken"])
-
-    async def _ensure_auth(self) -> str:
-        """Ensure we have a valid ID token."""
-        if not self.id_token or not self.id_token_expiry or datetime.now() >= self.id_token_expiry:
-            self.id_token = await self._get_id_token()
-        return self.id_token
-
-    async def fetch_daily_quotes(self, code: str) -> list[dict[str, Any]]:
-        """Fetch daily quotes for a specific stock code using pagination."""
-        id_token = await self._ensure_auth()
-        url = f"{self.BASE_URL}/quotes/daily_quotes"
-
-        headers = {"Authorization": f"Bearer {id_token}"}
-        params: dict[str, str] = {"code": code}
+        url = f"{self.BASE_URL}/equities/bars/daily"
+        headers = {"x-api-key": self.api_key}
+        params: dict[str, str] = {
+            "code": normalized_code,
+            "from": from_date,
+            "to": to_date
+        }
 
         all_quotes: list[dict[str, Any]] = []
 
         while True:
+            logger.debug(f"Requesting data for {normalized_code} from {from_date} to {to_date}...")
             response = await self.client.get(url, headers=headers, params=params)
 
+            if response.status_code == 429:
+                logger.warning("Rate limit exceeded. Waiting 1s...")
+                await asyncio.sleep(1)
+                continue
+
             if response.status_code == 401:
-                 msg = "Authentication Error (401)"
+                 msg = "Authentication Error (401): Invalid API Key."
                  raise Exception(msg)
             if response.status_code == 403:
-                 msg = "Permission Error (403): You may have exceeded your plan limits."
-                 raise Exception(msg)
-            if response.status_code == 429:
-                 msg = "Rate Limit Exceeded (429): Too many requests."
+                 msg = f"Permission Error (403): {response.text}"
                  raise Exception(msg)
             if response.status_code >= 500:
                  msg = f"Server Error ({response.status_code})"
                  raise Exception(msg)
 
-            response.raise_for_status()
+            if response.status_code != 200:
+                logger.error(f"API Error: {response.status_code} - {response.text}")
+                response.raise_for_status()
+            
             data = response.json()
-
-            if "daily_quotes" in data:
-                 all_quotes.extend(data["daily_quotes"])
+            # V2 uses "data" field instead of "daily_quotes"
+            quotes = data.get("data", [])
+            
+            # Map V2 shortened field names to the names expected by ETL
+            # O -> Open, H -> High, L -> Low, C -> Close, Vo -> Volume
+            field_map = {
+                "O": "Open",
+                "H": "High",
+                "L": "Low",
+                "C": "Close",
+                "Vo": "Volume",
+                "Code": "Code",
+                "Date": "Date"
+            }
+            
+            mapped_quotes = []
+            for q in quotes:
+                mapped_q = {}
+                for v2_key, full_key in field_map.items():
+                    if v2_key in q:
+                        mapped_q[full_key] = q[v2_key]
+                # Keep other fields as is
+                for k, v in q.items():
+                    if k not in field_map:
+                        mapped_q[k] = v
+                mapped_quotes.append(mapped_q)
+                
+            all_quotes.extend(mapped_quotes)
 
             pagination_key = data.get("pagination_key")
             if not pagination_key:
