@@ -12,7 +12,7 @@ app = rx.App(
         has_background=True,
         radius="none",
         accent_color="blue",
-    )
+    ),
 )
 
 app.add_page(index, title="Japan Stock Anomaly Analyzer")

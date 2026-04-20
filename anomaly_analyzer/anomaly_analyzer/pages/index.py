@@ -11,7 +11,6 @@ def index() -> rx.Component:
     return rx.container(
         rx.hstack(
             sidebar_controls(),
-
             rx.vstack(
                 # Error Message
                 rx.cond(
@@ -19,36 +18,42 @@ def index() -> rx.Component:
                     rx.box(
                         rx.hstack(
                             rx.text(AppState.error_message),
-                            rx.button("X", on_click=AppState.clear_error, bg="transparent", color="red")
+                            rx.button(
+                                "X",
+                                on_click=AppState.clear_error,
+                                bg="transparent",
+                                color="red",
+                            ),
                         ),
                         style=error_callout,
-                        width="100%"
+                        width="100%",
                     ),
-                    rx.box()
+                    rx.box(),
                 ),
-
                 # Loading indicator
                 rx.cond(
                     AppState.is_loading,
                     rx.center(
                         rx.spinner(size="3", color="red"),
-                        rx.text(" Processing... Please wait.", font_weight="bold", margin_left="1rem"),
+                        rx.text(
+                            " Processing... Please wait.",
+                            font_weight="bold",
+                            margin_left="1rem",
+                        ),
                         width="100%",
                         padding="2rem",
                     ),
-                    rx.box()
+                    rx.box(),
                 ),
-
                 # Main content (Chart and Tables)
                 render_equity_chart(),
                 render_results_tables(),
-
                 width="100%",
-                padding="1rem"
+                padding="1rem",
             ),
             align_items="flex-start",
-            width="100%"
+            width="100%",
         ),
         size="4",
-        padding_y="2rem"
+        padding_y="2rem",
     )

@@ -8,10 +8,10 @@ STYLESHEETS = [
 # Base colors
 COLORS = {
     "bg": "#f0f0f0",
-    "primary": "#4a90e2", # Bright blue
-    "secondary": "#f8e71c", # Pastel yellow
-    "accent1": "#ff007f", # Vivid pink
-    "accent2": "#7ed321", # Vivid green
+    "primary": "#4a90e2",  # Bright blue
+    "secondary": "#f8e71c",  # Pastel yellow
+    "accent1": "#ff007f",  # Vivid pink
+    "accent2": "#7ed321",  # Vivid green
     "text": "#000000",
     "border": "#000000",
     "error_bg": "#ffcccc",
@@ -24,7 +24,7 @@ pixel_box = {
     "background_color": "white",
     "padding": "1rem",
     "margin": "0.5rem",
-    "border_radius": "0px", # Force sharp corners for pixel look
+    "border_radius": "0px",  # Force sharp corners for pixel look
 }
 
 pixel_button = {
@@ -40,9 +40,9 @@ pixel_button = {
         "box_shadow": f"2px 2px 0px 0px {COLORS['border']}",
     },
     "_active": {
-         "transform": "translate(4px, 4px)",
-         "box_shadow": "none",
-    }
+        "transform": "translate(4px, 4px)",
+        "box_shadow": "none",
+    },
 }
 
 secondary_button = {
@@ -53,7 +53,7 @@ secondary_button = {
         "background_color": COLORS["accent2"],
         "transform": "translate(2px, 2px)",
         "box_shadow": f"2px 2px 0px 0px {COLORS['border']}",
-    }
+    },
 }
 
 pixel_input = {
@@ -67,9 +67,7 @@ pixel_input = {
     "_placeholder": {
         "color": "#444444",
     },
-    "_focus": {
-        "border_color": COLORS["accent1"]
-    }
+    "_focus": {"border_color": COLORS["accent1"]},
 }
 
 error_callout = {

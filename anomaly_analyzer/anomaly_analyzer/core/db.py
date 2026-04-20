@@ -7,6 +7,7 @@ DATA_DIR = Path("data")
 DATA_DIR.mkdir(exist_ok=True)
 PARQUET_FILE = DATA_DIR / "quotes.parquet"
 
+
 def save_quotes(df: pl.DataFrame) -> None:
     """Save quotes data to parquet, appending and deduplicating if it exists.
 
@@ -26,6 +27,7 @@ def save_quotes(df: pl.DataFrame) -> None:
 
     # Write back
     deduplicated_df.write_parquet(PARQUET_FILE)
+
 
 def load_quotes(codes: list[str]) -> pl.DataFrame:
     """Load quotes data for specific codes from parquet using DuckDB.
