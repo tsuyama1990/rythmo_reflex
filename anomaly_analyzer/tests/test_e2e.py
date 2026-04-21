@@ -11,7 +11,7 @@ def test_e2e_flow(page: Page) -> None:
     ticker_input.fill("8697")  # JPX
 
     # Click Fetch Data
-    page.locator("button:has-text('Fetch Data')").click()
+    page.locator("button:has-text('Fetch')").click()
 
     # Wait for fetching to complete. We know it's done when available dates appear.
     # The initial dates are blank " to ". Once loaded they become e.g. "2023-01-01 to 2024-01-01"
