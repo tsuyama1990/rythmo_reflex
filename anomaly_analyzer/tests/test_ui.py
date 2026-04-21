@@ -12,5 +12,5 @@ def test_app_loads(page: Page) -> None:
     expect(page.locator("input[placeholder='e.g. 6599, 7713']")).to_be_visible()
 
     # Check buttons exist
-    expect(page.locator("button:has-text('Fetch Data')")).to_be_visible()
+    expect(page.locator("button:has-text('Fetch')")).to_be_visible()
     expect(page.locator("button:has-text('START ANALYSIS')")).to_be_visible()
