@@ -12,6 +12,7 @@ from .core.stats import run_stats_test
 
 logger = logging.getLogger(__name__)
 
+
 class AppState(rx.State):  # type: ignore
     """Global state for the Anomaly Analyzer application."""
 
@@ -21,19 +22,23 @@ class AppState(rx.State):  # type: ignore
     target_tickers_input: str = "6599, 7713"
     target_tickers: list[str] = ["6599", "7713"]
 
+    search_history: list[str] = rx.LocalStorage([], name="search_history")
+    selected_tickers: list[str] = []
+
     slippage_pct: float = 0.1
     target_anomaly: str = "day_of_week"  # "day_of_week" or "month_end"
+    trade_duration: str = "daily"  # "daily", "intraday", "overnight"
 
     available_dates: tuple[str, str] = ("", "")
 
-    backtest_results: dict[str, Any] = {}
+    backtest_results: dict[str, dict[str, Any]] = {}
     chart_data: list[dict[str, Any]] = []
-    stats_results: dict[str, Any] = {}
+    stats_results: dict[str, dict[str, Any]] = {}
 
     def update_tickers(self, value: str) -> None:
         self.target_tickers_input = value
         raw_tickers = [t.strip() for t in value.split(",") if t.strip()]
-        
+
         normalized = []
         for t in raw_tickers:
             if len(t) == 4 and t.isdigit():
@@ -47,6 +52,18 @@ class AppState(rx.State):  # type: ignore
 
     def update_anomaly(self, value: str) -> None:
         self.target_anomaly = value
+
+    def update_trade_duration(self, value: str) -> None:
+        self.trade_duration = value
+
+    def toggle_ticker(self, ticker: str, checked: bool) -> None:
+        new_selected = list(self.selected_tickers)
+        if checked:
+            if ticker not in new_selected:
+                new_selected.append(ticker)
+        elif ticker in new_selected:
+            new_selected.remove(ticker)
+        self.selected_tickers = new_selected
 
     def clear_error(self) -> None:
         self.error_message = ""
@@ -64,7 +81,7 @@ class AppState(rx.State):  # type: ignore
         try:
             success_tickers = []
             failed_tickers = []
-            
+
             for ticker in tickers:
                 logger.info(f"Fetching data for {ticker}...")
                 quotes = await client.fetch_daily_quotes(ticker)
@@ -84,15 +101,38 @@ class AppState(rx.State):  # type: ignore
                     msg = f"No data found for: {', '.join(failed_tickers)}. "
                     msg += "Note: J-Quants V2 Free Plan only covers certain major stocks (e.g., try Toyota '7203')."
                     self.error_message = msg
-                
+
+                # Update history and selected tickers
+                if success_tickers:
+                    # Append new tickers to history and deduplicate
+                    # We want the newest ones at the end (or start, let's say start)
+                    new_history = list(self.search_history)
+                    for t in success_tickers:
+                        if t in new_history:
+                            new_history.remove(t)
+                        new_history.insert(0, t)
+
+                    # Cap at 5
+                    self.search_history = new_history[:5]
+
+                    # Add newly fetched to selected_tickers
+                    new_selected = list(self.selected_tickers)
+                    for t in success_tickers:
+                        if t not in new_selected:
+                            new_selected.append(t)
+                    self.selected_tickers = new_selected
+
                 # Update available dates
-                df_all = load_quotes(tickers)
+                df_all = load_quotes(success_tickers)
                 if not df_all.is_empty():
                     min_date = df_all.select("Date").min().item()
                     max_date = df_all.select("Date").max().item()
 
                     if min_date and max_date:
-                        self.available_dates = (min_date.strftime("%Y-%m-%d"), max_date.strftime("%Y-%m-%d"))
+                        self.available_dates = (
+                            min_date.strftime("%Y-%m-%d"),
+                            max_date.strftime("%Y-%m-%d"),
+                        )
                 else:
                     self.available_dates = ("", "")
                     if not self.error_message:
@@ -113,21 +153,35 @@ class AppState(rx.State):  # type: ignore
         async with self:
             self.is_loading = True
             self.error_message = ""
-            tickers = self.target_tickers
+            tickers_to_analyze = self.selected_tickers
+
+            if not tickers_to_analyze:
+                self.error_message = "No tickers selected for analysis. Please check at least one ticker."
+                self.is_loading = False
+                return
+
             anomaly = self.target_anomaly
+            trade_duration = self.trade_duration
             slippage = self.slippage_pct
 
         try:
-            # Load and process data
-            df = load_quotes(tickers)
+            df = load_quotes(tickers_to_analyze)
             if df.is_empty():
-                raise ValueError("No data available for the selected tickers. Please fetch data first.")
+                raise ValueError(
+                    "No data available for the selected tickers. Please fetch data first."
+                )
+
+            loaded_tickers = df.select("Code").unique().to_series().to_list()
+            missing_tickers = [t for t in tickers_to_analyze if t not in loaded_tickers]
+            if missing_tickers:
+                msg = f"Data for {', '.join(missing_tickers)} is missing locally. Please fetch data first."
+                raise ValueError(msg)
 
             # Run Backtest
-            bt_metrics, bt_chart = run_backtest(df, anomaly, slippage)
+            bt_metrics, bt_chart = run_backtest(df, anomaly, trade_duration, slippage)
 
             # Run Stats
-            st_metrics = run_stats_test(df, anomaly)
+            st_metrics = run_stats_test(df, anomaly, trade_duration)
 
             async with self:
                 self.backtest_results = bt_metrics
@@ -138,7 +192,10 @@ class AppState(rx.State):  # type: ignore
                 min_date = df.select("Date").min().item()
                 max_date = df.select("Date").max().item()
                 if min_date and max_date:
-                    self.available_dates = (min_date.strftime("%Y-%m-%d"), max_date.strftime("%Y-%m-%d"))
+                    self.available_dates = (
+                        min_date.strftime("%Y-%m-%d"),
+                        max_date.strftime("%Y-%m-%d"),
+                    )
 
         except Exception as e:
             logger.error(f"Error running analysis: {e}")

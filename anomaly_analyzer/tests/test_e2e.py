@@ -8,7 +8,7 @@ def test_e2e_flow(page: Page) -> None:
 
     # Change target ticker
     ticker_input = page.locator("input[placeholder='e.g. 6599, 7713']")
-    ticker_input.fill("8697") # JPX
+    ticker_input.fill("8697")  # JPX
 
     # Click Fetch Data
     page.locator("button:has-text('Fetch Data')").click()
@@ -18,7 +18,11 @@ def test_e2e_flow(page: Page) -> None:
     # Wait for fetching to complete or fail.
     # We might see error if keys are not set, so check for that as well
     with contextlib.suppress(Exception):
-        expect(page.locator("text=/Available Dates: \\d{4}-\\d{2}-\\d{2} to \\d{4}-\\d{2}-\\d{2}/")).to_be_visible(timeout=10000)
+        expect(
+            page.locator(
+                "text=/Available Dates: \\d{4}-\\d{2}-\\d{2} to \\d{4}-\\d{2}-\\d{2}/"
+            )
+        ).to_be_visible(timeout=10000)
 
     # Click START ANALYSIS
     # Just force click it to bypass pointer events intercepting
