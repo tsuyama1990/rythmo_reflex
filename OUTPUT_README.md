@@ -38,3 +38,5 @@
 
 ---
 最初は難しいかもしれませんが、色々な銘柄や条件を試して、アノマリー分析を楽しんでみてください！
+
+*(Note: Generated via fallback mock since no GEMINI_API_KEY was provided)*
